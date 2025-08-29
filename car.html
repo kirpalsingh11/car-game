@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D Car game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            /* Prevent scrollbars */
+            background-color: #a0d7e6;
+            /* Light sky blue background */
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            /* A retro arcade font for style */
+            /* Prevent default touch behaviors like pull-to-refresh or selection */
+            overscroll-behavior: none;
+            touch-action: none;
+            /* For pointer events, might help on some devices */
+        }
+
+        canvas {
+            display: block;
+            /* Remove annoying space below canvas */
+        }
+
+        #loading-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            /* For progress text */
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+            gap: 15px;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            /* Disable interaction after fading */
+        }
+
+        #loading-text {
+            font-size: 1em;
+        }
+
+        #loading-progress {
+            font-size: 0.8em;
+        }
+
+        /* --- UI Elements --- */
+        #ui-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            /* White text */
+            text-shadow: 1px 1px 3px black;
+            /* Black shadow for readability */
+            z-index: 50;
+            font-size: 1.5em;
+            /* Slightly larger font */
+            pointer-events: none;
+            /* Let clicks pass through */
+        }
+
+        #score {
+            margin-bottom: 5px;
+        }
+
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4444;
+            /* Bright red */
+            font-size: 4em;
+            /* Large text */
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 2px 2px 5px black;
+            /* Stronger shadow */
+            display: none;
+            /* Hidden initially */
+            z-index: 101;
+            /* Above everything else */
+            pointer-events: auto;
+            /* Enable clicks on restart button */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        #restart-button {
+            background-color: #21c60ffc;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.4em;
+            /* Relative to parent font-size */
+            cursor: pointer;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+            transition: background-color 0.3s ease;
+        }
+
+        #restart-button:hover {
+            background-color: #0056b3;
+        }
+
+
+        /* --- Mobile Control Buttons --- */
+        .control-button {
+            position: absolute;
+            bottom: 20px;
+            /* Position from bottom */
+            width: 80px;
+            /* Button width */
+            height: 80px;
+            /* Button height */
+            background-color: rgba(255, 255, 255, 0.3);
+            /* Semi-transparent white */
+            border: 2px solid rgba(0, 0, 0, 0.5);
+            /* Darker border */
+            border-radius: 50%;
+            /* Circular buttons */
+            z-index: 60;
+            /* Above canvas, below game over */
+            display: flex;
+            /* For centering arrow inside */
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5em;
+            /* Arrow size */
+            color: rgba(0, 0, 0, 0.7);
+            /* Arrow color */
+            cursor: pointer;
+            /* Indicate clickable */
+            /* Prevent text selection on tap */
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            -moz-user-select: none;
+            /* Prevent iOS tap highlight */
+            -webkit-tap-highlight-color: transparent;
+            pointer-events: auto;
+            /* Allow interaction */
+        }
+
+        /* Style for when button is pressed */
+        .control-button:active {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        #left-button {
+            left: 20px;
+            /* Position left button */
+        }
+
+        #right-button {
+            right: 20px;
+            /* Position right button */
+        }
+
+        /* --- End Mobile Control Buttons --- */
+
+        /* Import Google Font for UI */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    </style>
+</head>
+
+<body>
+    <div id="loading-screen">
+        <div id="loading-text">Loading Game...</div>
+        <div id="loading-progress">0%</div>
+    </div>
+    <div id="container"></div>
+
+    <div id="ui-container">
+        <div id="score">Score: 0</div>
+    </div>
+    <div id="game-over">
+        GAME OVER!
+        <button id="restart-button">Restart</button>
+    </div>
+
+    <div id="left-button" class="control-button">◀</div>
+    <div id="right-button" class="control-button">▶</div>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module" src="car.js"></script>
+</body>
+
+</html>
