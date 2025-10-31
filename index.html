@@ -193,14 +193,42 @@ async function loadLeaderboard() {
   });
 }
 
-// --- Example Game Placeholder ---
 function init() {
-  console.log("Game started!");
-  score = Math.floor(Math.random() * 1000); // demo only
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  let x = 100, y = 100;
+  let speed = 5;
+  score = 0;
+
+  function draw() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "red";
+    ctx.fillRect(x, y, 50, 50); // player car
+
+    ctx.fillStyle = "white";
+    ctx.fillText("Score: " + score, 10, 30);
+  }
+
+  function update() {
+    score++;
+    draw();
+    requestAnimationFrame(update);
+  }
+
+  update();
+
+  // end the game after 10 seconds for demo
   setTimeout(() => {
     endGame();
-  }, 5000);
+  }, 10000);
 }
+
 </script>
 </body>
 </html>
+
