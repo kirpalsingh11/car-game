@@ -3,20 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Car Game</title>
+<title>Car Game with Firebase Leaderboard</title>
 <style>
-  body { margin:0; overflow:hidden; font-family:sans-serif; background:#111; color:white; }
+  body { margin: 0; overflow: hidden; font-family: sans-serif; background: #111; color: white; }
   #login-screen, #username-screen, #submit-screen {
-    position:absolute; inset:0; display:flex; flex-direction:column;
-    justify-content:center; align-items:center; background: rgba(0,0,0,0.9);
-    z-index:200; gap:10px;
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; background: rgba(0,0,0,0.9);
+    z-index: 200; gap: 10px;
   }
-  input, button { padding:10px; font-size:1em; }
+  input, button { padding: 10px; font-size: 1em; }
   #leaderboard {
-    position:absolute; top:10px; right:10px;
-    background: rgba(0,0,0,0.6); padding:10px; max-width:220px; border-radius:10px;
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(0,0,0,0.6); padding: 10px; max-width: 220px; border-radius: 10px;
   }
-  canvas { display:block; }
 </style>
 </head>
 <body>
@@ -50,17 +49,15 @@
 
 <canvas id="gameCanvas"></canvas>
 
-<!-- Firebase CDN -->
-<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-firestore.js"></script>
+<!-- Firebase (compat scripts, global "firebase" object) -->
+<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-firestore-compat.js"></script>
 
-<!-- Three.js CDN -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.164.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.164.0/examples/js/loaders/GLTFLoader.js"></script>
+<!-- Three.js CDN (non-module version) -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
 
-<!-- Game JS -->
+<!-- Your game JS -->
 <script src="car.js"></script>
 </body>
 </html>
-
