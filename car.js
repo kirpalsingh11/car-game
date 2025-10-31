@@ -26,6 +26,7 @@ import { GLTFLoader } from 'https://unpkg.com/three@0.164.1/examples/jsm/loaders
 import { DRACOLoader } from 'https://unpkg.com/three@0.164.1/examples/jsm/loaders/DRACOLoader.js';
 import { RGBELoader } from 'https://unpkg.com/three@0.164.1/examples/jsm/loaders/RGBELoader.js';
 
+
 /* === FIREBASE CONFIG - REPLACE with your project's config === */
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -583,3 +584,4 @@ window.endGame = onGameOver;
 
 /* (Optional) load initial leaderboard on page load so it's visible even before playing */
 loadLeaderboard();
+
