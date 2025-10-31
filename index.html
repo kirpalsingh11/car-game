@@ -1,128 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>3D Car Game — Firebase Leaderboard</title>
-  <style>
-    :root { --ui-z: 300; }
-    html,body { height:100%; margin:0; background:#a0d7e6; font-family: Arial, Helvetica, sans-serif; }
-    #container { width:100%; height:100%; position:relative; overflow:hidden; }
-
-    /* Loading screen */
-    #loading-screen {
-      position:absolute; inset:0; display:flex; flex-direction:column;
-      justify-content:center; align-items:center; background:#000; color:#fff;
-      z-index:401; gap:10px; font-size:1.2rem;
-    }
-    #loading-screen.hidden { opacity:0; pointer-events:none; transition:opacity .4s ease; }
-
-    /* UI (score) */
-    #ui-container {
-      position:absolute; left:12px; top:12px; z-index:400; color:white; text-shadow:1px 1px 4px #000;
-      pointer-events:none; font-size:1.1rem;
-    }
-
-    /* Game Over (internal) */
-    #game-over {
-      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      display:none; z-index:410; color:#ff4444; font-size:2rem; text-align:center;
-      background:rgba(0,0,0,0.6); padding:18px; border-radius:12px;
-    }
-    #restart-button { margin-top:12px; padding:10px 14px; cursor:pointer; pointer-events:auto; }
-
-    /* Left/Right mobile control buttons */
-    .control-button {
-      position:absolute; bottom:20px; width:80px; height:80px; border-radius:50%;
-      display:flex; justify-content:center; align-items:center; font-size:2.2rem;
-      background:rgba(255,255,255,0.22); color:#111; border:2px solid rgba(0,0,0,0.35);
-      z-index:399; user-select:none; -webkit-user-select:none; pointer-events:auto;
-    }
-    #left-button { left:20px; }
-    #right-button { right:20px; }
-
-    /* Login / Username / Submit overlays (Firebase flows) */
-    .overlay {
-      position:absolute; inset:0; display:flex; flex-direction:column;
-      justify-content:center; align-items:center; background:rgba(0,0,0,0.92);
-      gap:10px; z-index:500; color:#fff;
-    }
-    .overlay input { padding:10px; font-size:1rem; width:250px; border-radius:6px; border:1px solid #444; }
-    .overlay button { padding:10px 14px; font-size:1rem; border-radius:6px; cursor:pointer; }
-
-    /* Leaderboard box */
-    #leaderboard {
-      position:absolute; top:12px; right:12px; z-index:500; background:rgba(0,0,0,0.6);
-      padding:10px; border-radius:8px; color:white; font-size:0.95rem; max-width:280px;
-    }
-    #leaderboard ol { padding-left:18px; margin:6px 0; }
-    #player-info { margin-top:6px; font-size:0.9rem; opacity:0.9; }
-
-    /* Make canvas fill parent */
-    canvas { display:block; width:100%; height:100%; }
-
-    @media (max-width:600px) {
-      .overlay input { width:80%; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Car Game with Firebase Leaderboard</title>
+<style>
+  body { margin:0; overflow:hidden; font-family:sans-serif; background:#111; color:white; }
+  #login-screen, #username-screen, #submit-screen {
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    justify-content:center; align-items:center; background: rgba(0,0,0,0.9);
+    z-index:200; gap:10px;
+  }
+  input, button { padding:10px; font-size:1em; }
+  #leaderboard {
+    position:absolute; top:10px; right:10px;
+    background: rgba(0,0,0,0.6); padding:10px; max-width:220px; border-radius:10px;
+  }
+  canvas { display:block; }
+</style>
 </head>
 <body>
-  <div id="container">
-    <!-- Loading -->
-    <div id="loading-screen">
-      <div id="loading-text">Loading game...</div>
-      <div id="loading-progress">0%</div>
-    </div>
 
-    <!-- Three.js will append renderer inside #container -->
-    <div id="ui-container">
-      <div id="score">Score: 0</div>
-    </div>
+<div id="login-screen">
+  <h2>Login</h2>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  <button id="login-btn">Next</button>
+</div>
 
-    <div id="game-over">
-      GAME OVER!
-      <div><button id="restart-button">Restart</button></div>
-    </div>
+<div id="username-screen" style="display:none;">
+  <h2>Choose Username</h2>
+  <input type="text" id="username" placeholder="Username">
+  <button id="start-btn">Play Game</button>
+</div>
 
-    <!-- Mobile Controls (Three.js code hooks these) -->
-    <div id="left-button" class="control-button">◀</div>
-    <div id="right-button" class="control-button">▶</div>
+<div id="submit-screen" style="display:none;">
+  <h2>Game Over</h2>
+  <p>Your Score: <span id="final-score"></span></p>
+  <button id="submit-score-btn">Submit Score</button>
+  <button id="skip-btn">Skip</button>
+</div>
 
-    <!-- Leaderboard + Logout -->
-    <div id="leaderboard">
-      <h3 style="margin:0 0 6px 0;">Leaderboard</h3>
-      <ol id="leaderboard-list"></ol>
-      <div id="player-info"></div>
-      <button id="logout-btn" style="margin-top:8px;">Logout</button>
-    </div>
+<div id="leaderboard">
+  <h3>Leaderboard</h3>
+  <ol id="leaderboard-list"></ol>
+  <p id="player-info"></p>
+  <button id="logout-btn" style="margin-top:5px;">Logout</button>
+</div>
 
-    <!-- Firebase flow overlays (start hidden where necessary) -->
-    <div id="login-screen" class="overlay">
-      <h2>Login</h2>
-      <input id="email" type="email" placeholder="Email" />
-      <input id="password" type="password" placeholder="Password" />
-      <button id="login-btn">Next</button>
-    </div>
+<canvas id="gameCanvas"></canvas>
 
-    <div id="username-screen" class="overlay" style="display:none;">
-      <h2>Pick a Username</h2>
-      <input id="username" type="text" placeholder="Username" />
-      <button id="start-btn">Play Game</button>
-    </div>
+<!-- Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-firestore.js"></script>
 
-    <div id="submit-screen" class="overlay" style="display:none;">
-      <h2>Game Over</h2>
-      <p>Your Score: <span id="final-score">0</span></p>
-      <div style="display:flex; gap:10px; margin-top:8px;">
-        <button id="submit-score-btn">Submit Score</button>
-        <button id="skip-btn">Skip</button>
-      </div>
-    </div>
-  </div>
+<!-- Three.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.164.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.164.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.164.0/examples/js/loaders/DRACOLoader.js"></script>
 
-  <!-- game script (module) -->
-  <script type="module" src="./car.js"></script>
+<!-- Your Game JS -->
+<script src="car.js"></script>
 </body>
 </html>
-
-
