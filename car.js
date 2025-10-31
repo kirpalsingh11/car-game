@@ -15,14 +15,15 @@ import {
   getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// 🔥 Firebase Config (Replace with your own)
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAtH59VsKgktUW1mmY2ANNC2yjGbFpn1pA",
+  authDomain: "car-game-dabc2.firebaseapp.com",
+  projectId: "car-game-dabc2",
+  storageBucket: "car-game-dabc2.firebasestorage.app",
+  messagingSenderId: "950881096527",
+  appId: "1:950881096527:web:2598295deff284353beb3a",
+  measurementId: "G-WQ8Z13ZJ0W"
 };
 
 // Init Firebase
@@ -207,5 +208,6 @@ async function loadLeaderboard() {
     leaderboardList.appendChild(li);
   });
 }
+
 
 
