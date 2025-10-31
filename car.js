@@ -1,9 +1,10 @@
 // ---------------- Firebase ----------------
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyAtH59VsKgktUW1mmY2ANNC2yjGbFpn1pA",
   authDomain: "car-game-dabc2.firebaseapp.com",
   projectId: "car-game-dabc2",
-  storageBucket: "car-game-dabc2.appspot.com",
+  storageBucket: "car-game-dabc2.firebasestorage.app",
   messagingSenderId: "950881096527",
   appId: "1:950881096527:web:2598295deff284353beb3a",
   measurementId: "G-WQ8Z13ZJ0W"
@@ -223,3 +224,4 @@ function animate(){
 
 // Game over
 function gameOver(){isGameOver=true; finalScore.textContent=score; submitScreen.style.display='flex';}
+
