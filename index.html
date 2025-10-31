@@ -205,8 +205,101 @@
             }
         }
     </script>
+     <!-- Firebase SDKs -->
+<script type="module">
+  // Import the functions you need from the SDKs you need
+ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.2.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.2.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.2.0/firebase-firestore.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyDhqbl-NixL7hPjS8ao1NULWq34RfAJH5Y",
+    authDomain: "d-car-game-fffb4.firebaseapp.com",
+    projectId: "d-car-game-fffb4",
+    storageBucket: "d-car-game-fffb4.firebasestorage.app",
+    messagingSenderId: "53484402467",
+    appId: "1:53484402467:web:dd543fb5d5b254497dfe96",
+    measurementId: "G-ZNWFXM16NH"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+const db = getFirestore(app);
+
+// Elements
+const loginScreen = document.getElementById('login-screen');
+const loginButton = document.getElementById('login-button');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const leaderboardList = document.getElementById('leaderboard-list');
+
+let currentUser = null;
+
+// Login or register user
+loginButton.addEventListener('click', async () => {
+    const email = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+    if (!email || !password) { alert('Enter email & password'); return; }
+
+    try {
+        // Try to sign in first
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        currentUser = userCredential.user;
+        loginScreen.style.display = 'none';
+        init(); // start game
+        loadLeaderboard();
+    } catch (err) {
+        // If fails, try register
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            currentUser = userCredential.user;
+            loginScreen.style.display = 'none';
+            init();
+            loadLeaderboard();
+        } catch (regErr) {
+            alert('Login/Registration failed: ' + regErr.message);
+        }
+    }
+});
+
+// Save score to Firestore
+async function saveScore(email, score) {
+    try {
+        await addDoc(collection(db, 'leaderboard'), { name: email, score, timestamp: Date.now() });
+        loadLeaderboard();
+    } catch (err) {
+        console.error('Error saving score:', err);
+    }
+}
+
+// Load top 5 scores
+async function loadLeaderboard() {
+    leaderboardList.innerHTML = '';
+    const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(5));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach(doc => {
+        const li = document.createElement('li');
+        li.textContent = `${doc.data().name}: ${doc.data().score}`;
+        leaderboardList.appendChild(li);
+    });
+}
+
+// Override endGame to save score
+function endGame() {
+    isGameOver = true;
+    gameOverElement.style.display = 'flex';
+    if (currentUser) saveScore(currentUser.email, score);
+}
+</script>
 
     <script type="module" src="car.js"></script>
 </body>
 
 </html>
+
