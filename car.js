@@ -20,11 +20,10 @@ import {
   limit,
   getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
-import { GLTFLoader } from 'https://unpkg.com/three@0.164.1/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'https://unpkg.com/three@0.164.1/examples/jsm/loaders/DRACOLoader.js';
-import { RGBELoader } from 'https://unpkg.com/three@0.164.1/examples/jsm/loaders/RGBELoader.js';
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js";
+import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/DRACOLoader.js";
+import { RGBELoader } from "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/RGBELoader.js";
 
 
 /* === FIREBASE CONFIG - REPLACE with your project's config === */
@@ -584,4 +583,5 @@ window.endGame = onGameOver;
 
 /* (Optional) load initial leaderboard on page load so it's visible even before playing */
 loadLeaderboard();
+
 
