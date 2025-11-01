@@ -1,5 +1,3 @@
-// ---------------- Firebase ----------------
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyAtH59VsKgktUW1mmY2ANNC2yjGbFpn1pA",
   authDomain: "car-game-dabc2.firebaseapp.com",
@@ -9,16 +7,19 @@ const firebaseConfig = {
   appId: "1:950881096527:web:2598295deff284353beb3a",
   measurementId: "G-WQ8Z13ZJ0W"
 };
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// --------------- DOM ----------------
+// --- DOM ---
 const loginScreen = document.getElementById('login-screen');
 const usernameScreen = document.getElementById('username-screen');
 const submitScreen = document.getElementById('submit-screen');
 const leaderboardList = document.getElementById('leaderboard-list');
 const playerInfo = document.getElementById('player-info');
+const finalScore = document.getElementById('final-score');
+const scoreEl = document.getElementById('score');
 
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
@@ -28,43 +29,56 @@ const startBtn = document.getElementById('start-btn');
 const submitScoreBtn = document.getElementById('submit-score-btn');
 const skipBtn = document.getElementById('skip-btn');
 const logoutBtn = document.getElementById('logout-btn');
-const finalScore = document.getElementById('final-score');
 
 let currentUser = null;
 let username = '';
 let score = 0;
 
-// ---------------- Login ----------------
+// --- Login ---
 loginBtn.addEventListener('click', () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
-  if(!email||!password) return alert("Enter email & password");
+  if (!email || !password) return alert("Enter email & password");
 
   auth.signInWithEmailAndPassword(email, password)
-    .then(res => { currentUser = res.user; loginScreen.style.display='none'; usernameScreen.style.display='flex'; })
+    .then(userCred => { currentUser = userCred.user; loginScreen.style.display='none'; usernameScreen.style.display='flex'; })
     .catch(err => {
-      auth.createUserWithEmailAndPassword(email,password)
-        .then(res => { currentUser = res.user; loginScreen.style.display='none'; usernameScreen.style.display='flex'; })
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(userCred => { currentUser = userCred.user; loginScreen.style.display='none'; usernameScreen.style.display='flex'; })
         .catch(e=>alert(e.message));
     });
 });
 
-// ---------------- Username ----------------
+// --- Choose Username ---
 startBtn.addEventListener('click', () => {
   username = usernameInput.value.trim();
-  if(!username) return alert("Enter username");
-  usernameScreen.style.display = 'none';
-  playerInfo.textContent = "Player: "+username;
+  if (!username) return alert("Enter a username");
+  usernameScreen.style.display='none';
+  playerInfo.textContent = "Player: " + username;
   initGame();
   loadLeaderboard();
 });
 
-// ---------------- Leaderboard ----------------
-function loadLeaderboard() {
+// --- Submit Score ---
+submitScoreBtn.addEventListener('click', () => {
+  if (!currentUser) return;
+  db.collection('leaderboard').add({ uid: currentUser.uid, username, score, timestamp: Date.now() })
+    .then(()=>{ alert("Score submitted!"); submitScreen.style.display='none'; loadLeaderboard(); })
+    .catch(err=>alert(err.message));
+});
+
+// --- Skip ---
+skipBtn.addEventListener('click', ()=>{ submitScreen.style.display='none'; });
+
+// --- Logout ---
+logoutBtn.addEventListener('click', ()=>{ auth.signOut(); location.reload(); });
+
+// --- Load Leaderboard ---
+function loadLeaderboard(){
   leaderboardList.innerHTML='';
   db.collection('leaderboard').orderBy('score','desc').limit(5).get()
-    .then(snap=>{
-      snap.forEach(doc=>{
+    .then(snapshot=>{
+      snapshot.forEach(doc=>{
         const li=document.createElement('li');
         li.textContent=`${doc.data().username}: ${doc.data().score}`;
         leaderboardList.appendChild(li);
@@ -72,156 +86,105 @@ function loadLeaderboard() {
     });
 }
 
-// ---------------- Submit Score ----------------
-submitScoreBtn.addEventListener('click', ()=>{
-  if(!currentUser) return;
-  db.collection('leaderboard').add({uid:currentUser.uid, username, score, timestamp:Date.now()})
-    .then(()=>{alert("Score submitted"); submitScreen.style.display='none'; loadLeaderboard();})
-    .catch(e=>{alert("Error: "+e.message)});
-});
-skipBtn.addEventListener('click',()=>{submitScreen.style.display='none';});
-logoutBtn.addEventListener('click',()=>{auth.signOut().then(()=>location.reload());});
-
-// ---------------- 3D Game ----------------
-let scene, camera, renderer, carModel, enemyCar;
-let road, roadLines=[], kerbs=[];
-let buildings=[], streetLights=[], trafficLights=[];
-let points=[];
-let moveLeft=false, moveRight=false;
-let carBaseY=0;
+// --- Game ---
+let scene, camera, renderer, car, enemy;
+let moveLeft=false, moveRight=false, carBaseY=0;
+let points=[], pointValue=10;
 let isGameOver=false;
-let pointTimer=0;
-
-const roadWidth=10, roadLength=200;
-const sceneryRecycleDistance=roadLength/2;
-const driveSpeed=0.5, enemyCarSpeed=0.6;
-const numPoints=15, pointValue=10;
 
 function initGame(){
-  scene=new THREE.Scene();
-  scene.background=new THREE.Color(0xa0d7e6);
-
-  camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);
-  camera.position.set(0,3,-7);
-
-  renderer=new THREE.WebGLRenderer({canvas:document.getElementById('gameCanvas'),antialias:true});
-  renderer.setSize(window.innerWidth,window.innerHeight);
+  const canvas = document.getElementById('gameCanvas');
+  renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled=true;
 
-  // Lights
-  const ambient=new THREE.AmbientLight(0xffffff,0.6);
-  scene.add(ambient);
-  const dir=new THREE.DirectionalLight(0xffffff,1.5);
-  dir.position.set(50,100,50); dir.castShadow=true;
-  scene.add(dir);
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xa0d7e6);
 
-  // Ground & Road
-  const groundMat=new THREE.MeshStandardMaterial({color:0x55aa55});
-  const groundGeo=new THREE.PlaneGeometry(roadWidth*5,roadLength*1.5);
-  const ground=new THREE.Mesh(groundGeo,groundMat); ground.rotation.x=-Math.PI/2;
-  scene.add(ground);
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.set(0,3,-7);
 
-  const roadMat=new THREE.MeshStandardMaterial({color:0x333333});
-  const roadGeo=new THREE.PlaneGeometry(roadWidth,roadLength*1.5);
-  road=new THREE.Mesh(roadGeo,roadMat); road.rotation.x=-Math.PI/2;
-  scene.add(road);
+  const light = new THREE.DirectionalLight(0xffffff,1.5);
+  light.position.set(50,100,50);
+  light.castShadow=true;
+  scene.add(light);
+  scene.add(new THREE.AmbientLight(0xffffff,0.6));
 
-  // Road Lines
-  const lineGeo=new THREE.PlaneGeometry(0.3,4);
-  const lineMat=new THREE.MeshStandardMaterial({color:0xffffff});
-  const lineGap=4;
-  const numLines=Math.floor(roadLength*1.5/(4+lineGap));
-  for(let i=0;i<numLines;i++){
-    const line=new THREE.Mesh(lineGeo,lineMat); line.rotation.x=-Math.PI/2;
-    line.position.z=(roadLength*1.5/2)-2-i*(4+lineGap);
-    roadLines.push(line); scene.add(line);
-  }
+  // --- Ground & Road ---
+  const roadGeo = new THREE.PlaneGeometry(10,200);
+  const roadMat = new THREE.MeshStandardMaterial({color:0x333333});
+  const road = new THREE.Mesh(roadGeo, roadMat); road.rotation.x=-Math.PI/2; scene.add(road);
 
-  // Player Car
-  const loader=new THREE.GLTFLoader();
-  const draco=new THREE.DRACOLoader();
-  draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
-  loader.setDRACOLoader(draco);
-  loader.load('https://threejs.org/examples/models/gltf/ferrari.glb', (gltf)=>{
-    carModel=gltf.scene; carModel.scale.set(0.8,0.8,0.8);
-    const box=new THREE.Box3().setFromObject(carModel); carBaseY=-box.min.y+0.01;
-    carModel.position.set(0,carBaseY,0); carModel.rotation.y=Math.PI;
-    carModel.traverse(node=>{if(node.isMesh){node.castShadow=node.receiveShadow=true;}});
-    scene.add(carModel);
+  // --- Car ---
+  const loader = new THREE.GLTFLoader();
+  loader.load('https://threejs.org/examples/models/gltf/ferrari.glb', gltf=>{
+    car = gltf.scene; car.scale.set(0.8,0.8,0.8);
+    const box = new THREE.Box3().setFromObject(car);
+    carBaseY = -box.min.y + 0.01;
+    car.position.set(0, carBaseY, 0);
+    car.rotation.y=Math.PI;
+    car.traverse(n=>{ if(n.isMesh){ n.castShadow=n.receiveShadow=true; } });
+    scene.add(car);
 
-    // Enemy car clone
-    enemyCar=carModel.clone();
-    enemyCar.traverse(node=>{if(node.isMesh){node.material=node.material.clone(); node.material.color.setHex(0x0000ff);}});
-    enemyCar.position.set(roadWidth/4,carBaseY,roadLength*0.7); scene.add(enemyCar);
-
-    camera.position.set(0,carBaseY+3,-7); camera.lookAt(carModel.position.x,carBaseY+1,carModel.position.z+5);
+    // --- Enemy ---
+    enemy = car.clone();
+    enemy.traverse(n=>{ if(n.isMesh){ const m=n.material.clone(); m.color.setHex(0x0000ff); n.material=m; } });
+    enemy.position.set(3,carBaseY,50);
+    scene.add(enemy);
 
     animate();
-  });
+  }, undefined, e=>console.error(e));
 
-  // Points
-  const pointGeo=new THREE.SphereGeometry(0.3,16,16);
-  const pointMat=new THREE.MeshStandardMaterial({color:0xffff00,emissive:0xaaaa00});
-  for(let i=0;i<numPoints;i++){
-    const point=new THREE.Mesh(pointGeo,pointMat);
-    resetPoint(point,true);
-    points.push(point); scene.add(point);
+  // --- Points ---
+  for(let i=0;i<15;i++){
+    const geo=new THREE.SphereGeometry(0.3,16,16);
+    const mat=new THREE.MeshStandardMaterial({color:0xffff00});
+    const p=new THREE.Mesh(geo,mat);
+    p.position.set((Math.random()*8)-4,0.3,Math.random()*100);
+    scene.add(p); points.push(p);
   }
 
-  // Controls
-  window.addEventListener('keydown', e=>{if(e.key==='ArrowLeft'||e.key==='a') moveLeft=true; else if(e.key==='ArrowRight'||e.key==='d') moveRight=true;});
-  window.addEventListener('keyup', e=>{if(e.key==='ArrowLeft'||e.key==='a') moveLeft=false; else if(e.key==='ArrowRight'||e.key==='d') moveRight=false;});
-  window.addEventListener('resize', ()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
-}
-
-// Reset point position
-function resetPoint(point,initial=false){
-  point.position.x=(Math.random()*2-1)*(roadWidth/2-1);
-  point.position.y=0.3+0.01;
-  point.position.z=initial?Math.random()*roadLength*0.8-Math.random()*roadLength*0.4:roadLength/2+Math.random()*roadLength*0.5;
-  point.visible=true;
-}
-
-// Animate loop
-function animate(){
-  requestAnimationFrame(animate);
-  if(!carModel) return;
-
-  const deltaZ=driveSpeed;
-
-  // Move road lines
-  roadLines.forEach(line=>{line.position.z-=deltaZ; if(line.position.z<-sceneryRecycleDistance) line.position.z+=roadLength*1.5;});
-
-  // Move enemy
-  if(enemyCar){enemyCar.position.z-=(enemyCarSpeed+driveSpeed); if(enemyCar.position.z<-sceneryRecycleDistance){enemyCar.position.z=roadLength*0.7+Math.random()*roadLength*0.5; enemyCar.position.x=(Math.random()<0.5?-1:1)*(roadWidth/2-1);}}
-
-  // Move player
-  if(moveLeft) carModel.position.x=Math.max(-roadWidth/2+1,carModel.position.x-0.15);
-  if(moveRight) carModel.position.x=Math.min(roadWidth/2-1,carModel.position.x+0.15);
-
-  // Camera follow
-  camera.position.x+= (carModel.position.x*0.5 - camera.position.x)*0.1;
-  camera.lookAt(carModel.position.x,carBaseY+1,carModel.position.z+5);
-
-  // Points collision
-  const playerBox=new THREE.Box3().setFromObject(carModel);
-  points.forEach(point=>{
-    if(!point.visible) return;
-    const pointBox=new THREE.Box3().setFromObject(point);
-    if(playerBox.intersectsBox(pointBox)){score+=pointValue; point.visible=false;}
-    point.position.z-=deltaZ; point.rotation.y+=0.05; if(point.position.z<-sceneryRecycleDistance) resetPoint(point);
+  window.addEventListener('keydown', e=>{
+    if(e.key==='ArrowLeft'||e.key==='a') moveLeft=true;
+    if(e.key==='ArrowRight'||e.key==='d') moveRight=true;
+  });
+  window.addEventListener('keyup', e=>{
+    if(e.key==='ArrowLeft'||e.key==='a') moveLeft=false;
+    if(e.key==='ArrowRight'||e.key==='d') moveRight=false;
   });
 
-  // Enemy collision
-  const enemyBox=new THREE.Box3().setFromObject(enemyCar);
-  const expandedPlayerBox=playerBox.clone().expandByScalar(0.5);
-  if(expandedPlayerBox.intersectsBox(enemyBox)){gameOver(); return;}
+  window.addEventListener('resize', ()=>{
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+}
 
-  // Update score timer
-  pointTimer+=deltaZ;
+function animate(){
+  requestAnimationFrame(animate);
+  if(!car) return;
+
+  if(moveLeft) car.position.x-=0.15;
+  if(moveRight) car.position.x+=0.15;
+  car.position.x=Math.max(-4,Math.min(4,car.position.x));
+
+  // Move enemy
+  if(enemy) { enemy.position.z-=0.6; if(enemy.position.z<-50){ enemy.position.z=50; enemy.position.x=(Math.random()*8)-4; } }
+
+  // Points collision
+  const carBox = new THREE.Box3().setFromObject(car);
+  points.forEach(p=>{
+    const pBox=new THREE.Box3().setFromObject(p);
+    if(carBox.intersectsBox(pBox)&&p.visible){ score+=pointValue; scoreEl.textContent='Score: '+score; p.visible=false; }
+  });
+
   renderer.render(scene,camera);
 }
 
-// Game over
-function gameOver(){isGameOver=true; finalScore.textContent=score; submitScreen.style.display='flex';}
-
+// --- Call this when game ends ---
+function endGame(){
+  isGameOver=true;
+  finalScore.textContent=score;
+  submitScreen.style.display='flex';
+}
+window.endGame=endGame;
