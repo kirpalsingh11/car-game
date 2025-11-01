@@ -4,49 +4,53 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>3D Car Game</title>
-
-<!-- Three.js CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.0/examples/js/loaders/GLTFLoader.js"></script>
-
-<!-- Firebase CDN -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <style>
-  body, html { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background:#071226; color:#fff; }
+  body { margin:0; overflow:hidden; font-family:sans-serif; background:#000; }
   #gameCanvas { display:block; }
-  #ui { position:absolute; top:0; left:0; width:100%; padding:10px; }
-  #player-info { font-size:18px; margin-bottom:5px; }
-  #score { font-size:18px; margin-bottom:5px; }
-  #username-screen, #submit-screen { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#333; padding:20px; border-radius:10px; }
-  input { padding:5px; margin:5px 0; width:200px; }
-  button { padding:5px 10px; margin:5px; cursor:pointer; }
-  #leaderboard-list { list-style:none; padding:0; margin-top:10px; }
+  #score { position:absolute; top:10px; left:10px; color:white; font-size:24px; z-index:10; }
+  #submit-screen, #username-screen { 
+    position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); color:white; display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:20; display:none; 
+  }
+  #leaderboard-list { color:white; margin-top:20px; }
+  #mobile-controls { position:absolute; bottom:20px; width:100%; text-align:center; pointer-events:none; z-index:10; }
+  #mobile-controls button { width:80px; height:80px; font-size:24px; margin:0 40px; pointer-events:auto; border:none; border-radius:10px; background:rgba(255,255,255,0.3); color:#000; }
 </style>
 </head>
 <body>
 
-<div id="ui">
-  <div id="player-info">Player: </div>
-  <div id="score">Score: 0</div>
-  <ul id="leaderboard-list"></ul>
-</div>
+<canvas id="gameCanvas"></canvas>
+<div id="score">Score: 0</div>
 
+<!-- Username Input -->
 <div id="username-screen">
-  <h3>Enter Username</h3>
-  <input id="username" placeholder="Username">
+  <h2>Enter Username</h2>
+  <input type="text" id="username" placeholder="Your username">
   <button id="start-btn">Start Game</button>
 </div>
 
+<!-- Submit Score -->
 <div id="submit-screen">
-  <h3>Game Over!</h3>
-  <div>Your Score: <span id="final-score"></span></div>
+  <h2>Game Over!</h2>
+  <div>Final Score: <span id="final-score">0</span></div>
   <button id="submit-score-btn">Submit Score</button>
   <button id="skip-btn">Skip</button>
+  <h3>Leaderboard</h3>
+  <ul id="leaderboard-list"></ul>
 </div>
 
-<canvas id="gameCanvas"></canvas>
+<!-- Mobile Controls -->
+<div id="mobile-controls">
+  <button id="left-btn">◀</button>
+  <button id="right-btn">▶</button>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- Three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.153.0/examples/js/loaders/GLTFLoader.js"></script>
 
 <script src="car.js"></script>
 </body>
