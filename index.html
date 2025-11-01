@@ -1,76 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Car Game with Firebase Leaderboard</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Endless 3D Car Game (Firebase Leaderboard)</title>
 <style>
-  body { margin:0; overflow:hidden; font-family:sans-serif; background:#111; color:white; }
-  #login-screen, #username-screen, #submit-screen {
-    position:absolute; inset:0; display:flex; flex-direction:column;
-    justify-content:center; align-items:center; background:rgba(0,0,0,0.9); z-index:200; gap:10px;
+  :root{--bg:#0b1220;--panel:rgba(0,0,0,0.6);--accent:#21c6ff}
+  html,body{height:100%;margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,Arial,sans-serif}
+  canvas{display:block;width:100%;height:100%;}
+  /* UI panels */
+  #ui {
+    position: absolute; inset: 0; pointer-events: none;
   }
-  input, button { padding:10px; font-size:1em; }
+  #top-left { position:absolute; left:12px; top:12px; pointer-events:auto; }
+  #score { background:var(--panel); padding:8px 12px; border-radius:8px; font-weight:700; }
   #leaderboard {
-    position:absolute; top:10px; right:10px;
-    background:rgba(0,0,0,0.6); padding:10px; max-width:220px; border-radius:10px;
+    position:absolute; right:12px; top:12px; background:var(--panel); padding:10px; border-radius:10px; width:220px; pointer-events:auto;
   }
-  #score { position:absolute; top:10px; left:10px; font-size:1.2em; }
+  #leaderboard h3{ margin:0 0 6px 0; font-size:1em; }
+  #leaderboard ol{ margin:0; padding-left:18px; max-height:220px; overflow:auto; }
+  #player-info{ margin-top:8px; font-size:0.9em; color:#ddd }
+  button,input{ font-family:inherit }
+  /* Login/username/submit screens (centered) */
+  .screen {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background: rgba(0,0,0,0.85); z-index: 250; gap:10px; pointer-events:auto;
+    flex-direction:column;
+  }
+  .screen input{ width:260px; padding:10px; border-radius:8px; border:0; outline:none }
+  .screen button{ padding:10px 16px; border-radius:8px; border:0; background:var(--accent); color:#000; cursor:pointer }
+  /* Game over submit screen smaller */
+  #submit-screen p{ margin:6px 0 0 0 }
+  /* Touch controls */
+  #touch-left, #touch-right {
+    position: absolute; bottom: 20px; width: 84px; height: 84px; border-radius: 50%;
+    background: rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center;
+    font-size:2.4rem; user-select:none; pointer-events:auto;
+    box-shadow:0 6px 18px rgba(0,0,0,0.6);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #touch-left { left: 18px; }
+  #touch-right { right: 18px; }
+  /* Restart / small controls */
+  #small-controls { position:absolute; left:50%; transform:translateX(-50%); bottom: 14px; z-index:240; pointer-events:auto; display:flex; gap:8px; }
+  #logout-btn{ margin-top:8px; width:100%; padding:8px; border-radius:8px; border:0; background:#ff6b6b; color:#fff; cursor:pointer }
 </style>
 </head>
 <body>
+  <!-- three.js canvas uses full page -->
+  <canvas id="gameCanvas"></canvas>
 
-<!-- LOGIN SCREEN -->
-<div id="login-screen">
-  <h2>Login</h2>
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Password">
-  <button id="login-btn">Next</button>
-</div>
+  <!-- UI overlay -->
+  <div id="ui" aria-hidden="false">
+    <div id="top-left">
+      <div id="score">Score: 0</div>
+    </div>
 
-<!-- USERNAME SCREEN -->
-<div id="username-screen" style="display:none;">
-  <h2>Choose Username</h2>
-  <input type="text" id="username" placeholder="Username">
-  <button id="start-btn">Play Game</button>
-</div>
+    <div id="leaderboard" role="region" aria-label="leaderboard">
+      <h3>Leaderboard</h3>
+      <ol id="leaderboard-list"></ol>
+      <div id="player-info">Not signed in</div>
+      <button id="logout-btn" style="display:none">Logout</button>
+    </div>
 
-<!-- SUBMIT SCORE -->
-<div id="submit-screen" style="display:none;">
-  <h2>Game Over</h2>
-  <p>Your Score: <span id="final-score"></span></p>
-  <button id="submit-score-btn">Submit Score</button>
-  <button id="skip-btn">Skip</button>
-</div>
+    <!-- touch controls -->
+    <div id="touch-left" aria-hidden="true">◀</div>
+    <div id="touch-right" aria-hidden="true">▶</div>
+  </div>
 
-<!-- LEADERBOARD -->
-<div id="leaderboard">
-  <h3>Leaderboard</h3>
-  <ol id="leaderboard-list"></ol>
-  <p id="player-info"></p>
-  <button id="logout-btn" style="margin-top:5px;">Logout</button>
-</div>
+  <!-- Login screen -->
+  <div id="login-screen" class="screen">
+    <h2>Login / Register</h2>
+    <input id="email" type="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Password" />
+    <button id="login-btn">Next</button>
+  </div>
 
-<!-- Score -->
-<div id="score">Score: 0</div>
+  <!-- Username screen -->
+  <div id="username-screen" class="screen" style="display:none">
+    <h2>Choose a username</h2>
+    <input id="username" type="text" placeholder="Username" />
+    <button id="start-btn">Play</button>
+  </div>
 
-<!-- Canvas -->
-<canvas id="gameCanvas"></canvas>
+  <!-- Submit score screen -->
+  <div id="submit-screen" class="screen" style="display:none">
+    <h2>Game Over</h2>
+    <p>Your Score: <span id="final-score">0</span></p>
+    <button id="submit-score-btn">Submit Score</button>
+    <button id="skip-btn">Skip</button>
+  </div>
 
-<!-- Firebase (compat SDKs, old global style) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase compat SDKs (global `firebase`) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
+  <!-- three.js + loaders (non-module UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.162.1/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.162.1/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.162.1/examples/js/loaders/DRACOLoader.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/loaders/GLTFLoader.js"></script>
-
-
-<!-- Game JS -->
-<script src="car.js"></script>
+  <!-- main game script -->
+  <script src="car.js"></script>
 </body>
 </html>
-
-
-
