@@ -4,58 +4,50 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>3D Car Game</title>
+
+<!-- Three.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<!-- Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <style>
-  body { margin:0; overflow:hidden; font-family:sans-serif; background:#111; color:#fff; }
-  #username-screen, #submit-screen { 
-    position:absolute; top:0; left:0; width:100%; height:100%; 
-    display:flex; flex-direction:column; justify-content:center; align-items:center; background:rgba(0,0,0,0.8); z-index:10;
-  }
-  input { font-size:1.2em; padding:5px; margin:10px; }
-  button { font-size:1.2em; padding:10px 20px; margin:10px; cursor:pointer; }
-  #score { position:absolute; top:10px; left:10px; font-size:1.5em; z-index:5; }
-  #leaderboard { position:absolute; top:10px; right:10px; background:#222; padding:10px; z-index:5; }
-  #touch-controls { position:absolute; bottom:20px; width:100%; display:flex; justify-content:space-between; padding:0 20px; z-index:5; }
-  #touch-controls button { font-size:2em; padding:20px; }
+  body, html { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background:#071226; color:#fff; }
+  #gameCanvas { display:block; }
+  #ui { position:absolute; top:0; left:0; width:100%; padding:10px; }
+  #player-info { font-size:18px; margin-bottom:5px; }
+  #score { font-size:18px; margin-bottom:5px; }
+  #username-screen, #submit-screen { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#333; padding:20px; border-radius:10px; }
+  input { padding:5px; margin:5px 0; width:200px; }
+  button { padding:5px 10px; margin:5px; cursor:pointer; }
+  #leaderboard-list { list-style:none; padding:0; margin-top:10px; }
 </style>
 </head>
 <body>
 
+<div id="ui">
+  <div id="player-info">Player: </div>
+  <div id="score">Score: 0</div>
+  <ul id="leaderboard-list"></ul>
+</div>
+
 <div id="username-screen">
-  <h2>Enter Username</h2>
-  <input type="text" id="username" placeholder="Username">
+  <h3>Enter Username</h3>
+  <input id="username" placeholder="Username">
   <button id="start-btn">Start Game</button>
 </div>
 
-<div id="submit-screen" style="display:none;">
-  <h2>Game Over!</h2>
-  <p>Score: <span id="final-score">0</span></p>
+<div id="submit-screen">
+  <h3>Game Over!</h3>
+  <div>Your Score: <span id="final-score"></span></div>
   <button id="submit-score-btn">Submit Score</button>
   <button id="skip-btn">Skip</button>
 </div>
 
-<div id="score">Score: 0</div>
-
-<div id="leaderboard">
-  <h3>Leaderboard</h3>
-  <ol id="leaderboard-list"></ol>
-</div>
-
 <canvas id="gameCanvas"></canvas>
 
-<div id="touch-controls">
-  <button id="left-btn">◀</button>
-  <button id="right-btn">▶</button>
-</div>
-
-<!-- Three.js + GLTFLoader CDN -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/loaders/GLTFLoader.js"></script>
-
-<!-- Firebase CDN -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-
 <script src="car.js"></script>
-
 </body>
 </html>
