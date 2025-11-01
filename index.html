@@ -3,23 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Car Game with Firebase Leaderboard</title>
+<title>3D Car Game with Firebase Leaderboard</title>
 <style>
-  body { margin: 0; overflow: hidden; font-family: sans-serif; background: #111; color: white; }
+  body { margin:0; overflow:hidden; font-family:sans-serif; background:#111; color:white; }
   #login-screen, #username-screen, #submit-screen {
-    position: absolute; inset: 0; display: flex; flex-direction: column;
-    justify-content: center; align-items: center; background: rgba(0,0,0,0.9);
-    z-index: 200; gap: 10px;
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    justify-content:center; align-items:center; background:rgba(0,0,0,0.9); z-index:200; gap:10px;
   }
-  input, button { padding: 10px; font-size: 1em; }
+  input, button { padding:10px; font-size:1em; }
   #leaderboard {
-    position: absolute; top: 10px; right: 10px;
-    background: rgba(0,0,0,0.6); padding: 10px; max-width: 220px; border-radius: 10px;
+    position:absolute; top:10px; right:10px;
+    background:rgba(0,0,0,0.6); padding:10px; max-width:220px; border-radius:10px;
   }
+  #score { position:absolute; top:10px; left:10px; font-size:1.2em; }
 </style>
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
 <div id="login-screen">
   <h2>Login</h2>
   <input type="email" id="email" placeholder="Email">
@@ -27,12 +28,14 @@
   <button id="login-btn">Next</button>
 </div>
 
+<!-- USERNAME SCREEN -->
 <div id="username-screen" style="display:none;">
   <h2>Choose Username</h2>
   <input type="text" id="username" placeholder="Username">
   <button id="start-btn">Play Game</button>
 </div>
 
+<!-- SUBMIT SCORE -->
 <div id="submit-screen" style="display:none;">
   <h2>Game Over</h2>
   <p>Your Score: <span id="final-score"></span></p>
@@ -40,6 +43,7 @@
   <button id="skip-btn">Skip</button>
 </div>
 
+<!-- LEADERBOARD -->
 <div id="leaderboard">
   <h3>Leaderboard</h3>
   <ol id="leaderboard-list"></ol>
@@ -47,17 +51,24 @@
   <button id="logout-btn" style="margin-top:5px;">Logout</button>
 </div>
 
+<!-- Score -->
+<div id="score">Score: 0</div>
+
+<!-- Canvas -->
 <canvas id="gameCanvas"></canvas>
 
-<!-- Firebase (compat scripts, global "firebase" object) -->
-<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-firestore-compat.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.2.0/firebase-firestore.js"></script>
 
-<!-- Three.js CDN (non-module version) -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+<!-- Three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.162.1/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.162.1/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.162.1/examples/js/loaders/DRACOLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.162.1/examples/js/loaders/RGBELoader.js"></script>
 
-<!-- Your game JS -->
+<!-- Game JS -->
 <script src="car.js"></script>
 </body>
 </html>
